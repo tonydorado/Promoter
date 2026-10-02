@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0b0d">
+<title>Teleprompter Mujer Sunamita</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Concept: dark stage page, one amber reading bar fixed at ~30% of the screen, text slides under it.
+   Amber = key words and the bar. Teal = pause cues. Coral = hard stop (interview). Blue = scripture refs. */
+:root{
+  --bg:#0a0b0d; --fg:#eceae4; --mute:#8d9097; --key:#f5c542; --ref:#8cc8e8;
+  --ui:#15171b; --line:#2b2e35; --bar:rgba(245,197,66,.14); --barline:rgba(245,197,66,.7);
+  --pz:#5fd0b0; --pzbg:rgba(95,208,176,.13); --stop:#ff8a73; --stopbg:rgba(255,138,115,.13);
+  --btn:#f5c542; --btnfg:#1a1400; --dim:rgba(10,11,13,.66); --panel:#111317;
+  --font-read:'Atkinson Hyperlegible', ui-sans-serif, -apple-system, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono:'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --bg:#fbfaf6; --fg:#15171b; --mute:#6a6e76; --key:#8f5200; --ref:#1b6c97;
+  --ui:#eeece5; --line:#d4d1c7; --bar:rgba(214,150,0,.16); --barline:rgba(160,100,0,.75);
+  --pz:#0b7d62; --pzbg:rgba(11,125,98,.1); --stop:#b53a22; --stopbg:rgba(181,58,34,.09);
+  --btn:#15171b; --btnfg:#fbfaf6; --dim:rgba(251,250,246,.7); --panel:#f2f0e9;
+  color-scheme:light;
+}
+html,body{height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-read);overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+#app{height:100%;display:flex;flex-direction:column;min-height:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--key);outline-offset:2px}
+
+/* controls */
+#top{background:var(--ui);border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 12px calc(16px + env(safe-area-inset-left));display:flex;flex-direction:column;gap:10px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;min-width:0}
+.speed label{font-size:15px;color:var(--mute);letter-spacing:.06em;text-transform:uppercase}
+#spd{flex:1 1 220px;min-width:0;height:36px;accent-color:var(--key)}
+#spdv{font-family:var(--font-mono);font-size:18px;min-width:5.5em}
+#eta{font-family:var(--font-mono);font-size:15px;color:var(--mute)}
+.btn{min-height:52px;padding:0 20px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:18px;font-weight:700;display:inline-flex;align-items:center;gap:10px}
+.btn.main{background:var(--btn);color:var(--btnfg);border-color:transparent;min-width:156px;justify-content:center}
+.sm{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:15px}
+.sm[aria-pressed="true"]{border-color:var(--pz);color:var(--pz)}
+.grp{display:inline-flex;align-items:center;gap:6px;font-size:15px;color:var(--mute)}
+.clock{font-family:var(--font-mono);font-size:30px;font-weight:500;line-height:1}
+.clock.warn #clock{color:var(--key)}.clock.over #clock{color:var(--stop)}
+.clock small{color:var(--mute);font-size:14px}
+.jump{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px;color:var(--mute)}
+.jump button{min-height:40px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:transparent;font-size:14px}
+.ic{display:inline-block;width:14px;height:16px;position:relative}
+.ic.play::before{content:"";position:absolute;left:1px;top:0;border-left:13px solid currentColor;border-top:8px solid transparent;border-bottom:8px solid transparent}
+.ic.pause::before,.ic.pause::after{content:"";position:absolute;top:0;width:4px;height:16px;background:currentColor;border-radius:1px}
+.ic.pause::before{left:1px}.ic.pause::after{left:9px}
+
+/* stage */
+#stage{position:relative;flex:1 1 0;min-height:0;overflow:hidden;touch-action:none;cursor:grab;-webkit-tap-highlight-color:transparent}
+#content{position:relative;will-change:transform;--fs:44px}
+.col{max-width:920px;margin:0 auto;padding-inline:22px}
+.t{margin:0 0 1.05em;font-size:var(--fs);line-height:1.5;letter-spacing:.004em}
+.t.q{border-left:4px solid var(--line);padding-left:.8em;font-style:italic}
+b.k{color:var(--key);font-weight:700;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:.18em;text-decoration-color:color-mix(in srgb,var(--key) 45%,transparent)}
+.blank{color:var(--key);font-weight:700;letter-spacing:.1em}
+.ref{font-family:var(--font-mono);font-size:.46em;color:var(--ref);border:1px solid var(--ref);padding:.1em .55em;border-radius:99px;vertical-align:.3em;white-space:nowrap;margin-inline:.15em}
+.sec{margin:1.6em 0 .7em;font-family:var(--font-mono);font-size:17px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;font-weight:500}
+.sec em{font-style:normal;color:var(--pz);border:1px solid var(--pz);padding:2px 10px;border-radius:99px}
+.chip{font-family:var(--font-mono);font-size:.36em;letter-spacing:.14em;text-transform:uppercase;padding:.28em .75em;border-radius:6px;vertical-align:.45em;margin-inline:.5em;display:inline-block;line-height:1.2;font-style:normal;font-weight:500;transition:background .2s,color .2s}
+.pz{color:var(--pz);background:var(--pzbg);border:1px solid var(--pz)}
+.pz.l{display:block;width:fit-content;font-size:.4em;margin:.8em 0;padding:.55em 1.3em;border-style:dashed}
+.look{color:var(--mute);border:1px dashed var(--mute)}
+.hit{background:var(--pz);color:var(--bg)}
+.look.hit{background:var(--mute)}
+.card{margin:1.2em 0 1.8em;padding:22px 24px;border:2px solid var(--stop);background:var(--stopbg);border-radius:16px;font-size:26px;line-height:1.4}
+.card .eyebrow{font-family:var(--font-mono);font-size:15px;letter-spacing:.12em;text-transform:uppercase;color:var(--stop);margin-bottom:12px}
+.card ol{margin:0 0 12px;padding-left:1.3em;display:flex;flex-direction:column;gap:8px}
+.card .after{margin:0 0 16px;font-size:20px;color:var(--mute)}
+.fin{font-family:var(--font-mono);text-align:center;letter-spacing:.3em;color:var(--mute);font-size:20px;margin:1.5em 0 0}
+html.male .f{display:none} html:not(.male) .m{display:none}
+
+/* reading bar, dimming of already-read text, progress */
+#bar{position:absolute;left:0;right:0;pointer-events:none;background:var(--bar);border-block:2px solid var(--barline);z-index:3}
+#bar::before{content:"";position:absolute;left:6px;top:50%;transform:translateY(-50%);border-left:14px solid var(--key);border-top:10px solid transparent;border-bottom:10px solid transparent}
+#bar::after{content:"";position:absolute;right:6px;top:50%;transform:translateY(-50%);border-right:14px solid var(--key);border-top:10px solid transparent;border-bottom:10px solid transparent}
+#dim{position:absolute;left:0;right:0;top:0;pointer-events:none;background:var(--dim);z-index:2}
+#prog{position:absolute;right:0;top:0;bottom:0;width:5px;background:var(--line);z-index:4;pointer-events:none}
+#prog i{display:block;width:100%;height:0;background:var(--key)}
+@media (prefers-reduced-motion:reduce){.chip{transition:none}}
+@media (max-width:760px){#top{padding-bottom:10px}.row{gap:8px 10px}.btn{padding:0 14px;font-size:16px;min-height:48px}.btn.main{min-width:130px}.sm{min-height:42px}.clock{font-size:24px}.jump{gap:6px}.jump button{min-height:38px}.col{padding-inline:18px}}
+@media (orientation:landscape) and (max-height:650px){#top{gap:6px}.btn{min-height:42px}.sm{min-height:38px}.jump button{min-height:34px}.clock{font-size:22px}}
+</style>
+
+</head><body>
+<div id="app">
+  <header id="top">
+    <div class="row speed">
+      <label for="spd">Velocidad</label>
+      <input id="spd" type="range" min="90" max="190" step="5" value="130" aria-label="Velocidad en palabras por minuto">
+      <output id="spdv" for="spd">130 ppm</output>
+      <span class="clock" id="clockw" title="Tiempo transcurrido: no se detiene al pausar"><span id="clock">0:00</span> <small>/ 15:00</small></span>
+      <span id="eta">lectura restante --:--</span>
+    </div>
+    <div class="row">
+      <button id="play" class="btn main" type="button"></button>
+      <button id="reset" class="btn" type="button">&#8634; Reiniciar</button>
+      <span class="grp">Letra
+        <button id="fm" class="sm" type="button" aria-label="Letra más pequeña">A&minus;</button>
+        <button id="fp" class="sm" type="button" aria-label="Letra más grande">A+</button>
+      </span>
+      <button id="auto" class="sm" type="button" aria-pressed="true">Pausas automáticas: sí</button>
+      <button id="gender" class="sm" type="button">Entrevista a: hermana</button>
+      <button id="theme" class="sm" type="button">Fondo claro</button>
+    </div>
+    <nav class="jump" aria-label="Saltar a una parte">
+      Ir a:
+      <button type="button" data-go="#p1">Introducción</button>
+      <button type="button" data-go="#p2">Cómo imitarla</button>
+      <button type="button" data-go="#iv">Entrevista</button>
+      <button type="button" data-go="#c1">Conclusión</button>
+    </nav>
+  </header>
+
+  <main id="stage" aria-label="Texto del discurso">
+    <div id="content"><div class="col">
+
+<h2 class="sec">Parte 1 · La mujer sunamita confió en Jehová <em>5 min</em></h2>
+
+<p class="t" id="p1"><b class="k">Barac</b> que gran ejemplo de confianza en Jehová. Y dentro de unos minutos escucharemos sobre <b class="k"> Daniel, Hananías, Misael y Azarías</b>. y SUS impresionantes historias de confianza en Jehová.<span class="chip pz s" data-ms="1000">pausa</span></p>
+
+<p class="t">Pero primero hablemos de <b class="k">la mujer de Sunem</b>. Sí, le decimos la mujer de Sunem o la sunamita porque <b class="k">ni siquiera sabemos cómo se llamaba</b>. De hecho, todo lo que la Biblia nos cuenta sobre ella, cabe en <b class="k">unos pocos versículos del 2do libro de los Reyes</b>.<span class="chip pz s" data-ms="1000">pausa</span></p>
+
+<p class="t">Y, sin embargo, <b class="k">¡qué ejemplo de fe y confianza en Jehová!</b> <span class="chip pz s" data-ms="1000">pausa</span>No es cierto que a veces, basta con un poco que sepamos de alguien, para que su ejemplo nos impacte?  <b class="k">Veamos por qué fue este el caso con la "Mujer de Sunem".</b><span class="chip look">mira al público</span></p>
+
+<p class="t"><b class="k">Imagínense la escena.</b> El profeta Eliseo va de paso por el pueblo de Sunem, cuando se le acerca una mujer y le insiste: «<b class="k">Que entre a su casa a comer</b>».</p>
+
+<p class="t"><b class="k"> ¡Qué mujer tan hospitalaria!. </b> Y si eso fuera lo único que hubiera hecho, ya sería algo muy amoroso de su parte. <b class="k">Pero no fue todo.</b><span class="chip pz s" data-ms="1500">pausa</span></p>
+
+<p class="t">Al ver a Eliseo regresar varias veces a Sunem, habla con su esposo, y juntos decidieron hacer algo más: </p>
+
+<p class="t"><b class="k">construyeron un pequeño cuarto en la azotea</b>, le pusieron, todo para que Eliseo tuviera un lugar cómodo y privado donde quedarse. </p>
+
+<p class="t"><b class="k">Pero, ¿Por qué tanto esfuerzo por un hombre que no era de su familia?</b> Porque ella sabia que Eliseo era <b class="k">un hombre santo de Dios</b>, y que al tenerlo en su casa, ella estaba <b class="k">apoyando el propósito de Jehová</b>.</p>
+
+<p class="t">Eliseo, estando agradecido, quiso recompensarla. <b class="k">Pero había un problema:</b> ella no quería nada.  Entonces <b class="k">Guehazí</b>, el sirviente de Eliseo, notó que ella no tenía hijos, y su esposo ya era mayor. Así que Eliseo le prometió que, para esa fecha el año siguiente, <b class="k">ella tendría un hijo en sus brazos</b>. Desde el punto de vista humano, eso parecía imposible.</p>
+
+<p class="t">Quizas a eso se debe su reacción,  leamos En 2 Reyes 4:16 la última oración donde se registra lo que ella dijo: <span class="chip pz s" data-ms="2500">pausa</span>«<b class="k">¡No, señor mío, hombre del Dios verdadero! No le digas mentiras a tu sierva</b>».<span class="chip pz s" data-ms="2500">pausa</span></p>
+
+<p class="t"> Y se entiende, no?. Cuando uno ha cargado una decepción por mucho tiempo, una buena noticia puede parecer imposible de creer. </p>
+
+<p class="t"><b class="k">Pero la promesa se cumplió.</b> Ella tuvo su hijo, exactamente como Eliseo le había dicho. Ahora su confianza en Jehová ya no venia solo de lo que había escuchado decir de El; ahora <b class="k"> se apoyaba en algo que ella misma había vivido.</b><span class="chip pz s" data-ms="2500">pausa</span></p>
+
+<p class="t">Pero la vida no siempre avanza en línea recta, ¿verdad? A veces nos lanza <b class="k">una curva que no vemos venir</b>. Lamentablemente, asi fue en su caso, ella pasó por una de las experiencias más devastadoras que puede soportar una persona: <b class="k">la muerte repentina de un hijo.</b><span class="chip pz l" data-ms="3000">pausa larga</span></p>
+
+<p class="t">Si ustedes lo han vivido, <b class="k">mi corazón está con ustedes.</b><span class="chip look">mira al público</span> El peso emocional de ese momento es casi inimaginable. Pero <b class="k"> lo que le sucedio en ese momento a esta mujer, no determino su historia.</b></p>
+
+<p class="t">Con eso en mente, fíjense en lo que ella hizo. <b class="k">el relato dice en 2 Reyes 4:21 que, </b>, ella tomó a su hijo, subió a la azotea y lo colocó en la cama de Eliseo, cerró la puerta y se preparó para viajar hasta <b class="k">hasta donde se encontraba Eliseo</b>.  Y cuando su esposo le preguntó por qué iba, ella respondió con una tranquilidad y seguridad que sorprende:<span class="chip pz s" data-ms="2500">pausa</span></p>
+
+<p class="t">Leamos <b class="k">2 Reyes, capítulo 4, versículo 23.</b> Solo las últimas palabras. Ella le dice: «<b class="k">No te preocupes. Todo está bien</b>».<span class="chip pz s" data-ms="2500">pausa</span></p>
+
+<p class="t"><b class="k"> ¿Todo esta bien?.</b> PERO. ¿Realmente Estaba todo bien? No. ¿Estaría bien su corazón? Seguramente no.</p>
+
+<p class="t">Pero su confianza en Jehová...,<span class="chip pz s" data-ms="1500">pausa</span> <b class="k">eso sí lo estaba.</b><span class="chip pz s" data-ms="2500">pausa</span><span class="chip look">mira al público</span></p>
+
+<p class="t">Enseguida <b class="k">emprende el camino</b> para buscar la ayuda de Eliseo. Ella sabía que su hijo necesitaba una intervención divina. Y quizás, durante el viaje, pensó en <b class="k">la resurrección que había realizado Elías</b>, el maestro de Eliseo. Eso pudo haber fortalecido su fe en que la vida de su hijo podía ser restaurada (<b class="k">no necesariamente que lo sería, pero sí que podía serlo</b>).</p>
+
+<p class="t">En cualquier caso,  Jehová premió su enorme confianza en él, resucitando a su hijo.  Que relato tan hermoso y animador. <b class="k">¡Y todo cabe en unos pocos versículos!</b><span class="chip pz s" data-ms="1500">pausa</span></p>
+
+<h2 class="sec">Parte 2 · Cómo podemos imitar a la mujer sunamita <em>5 min</em></h2>
+
+<p class="t" id="p2">Entonces, <b class="k">¿cómo podemos ustedes y yo imitar a esta mujer de confianza extraordinaria?</b><span class="chip pz s" data-ms="1000">pausa</span></p>
+
+<p class="t">Quizás la pregunta sea: <b class="k">¿cómo llegamos a tener una confianza así?</b> Porque es fácil decir: “Yo confío en Jehová” cuando todo está relativamente bien. Pero ¿qué pasa cuando llega una noticia que no esperábamos, cuando un problema familiar parece no tener salida, cuando faltan los recursos, o cuando llevamos tanto tiempo aguantando una situación que pensamos: <b class="k">“Ya no sé cuánto más puedo soportar”</b>?<span class="chip look">mira al público</span></p>
+
+<p class="t">Una manera de prepararnos para esos momentos es <b class="k">recordando cómo Jehová ya nos ha cuidado en el pasado</b>.</p>
+
+<p class="t">La <b class="k">Atalaya de mayo de 2023</b> habló de una hermana llamada <b class="k">Yoko</b>. Hubo un tiempo en que ella empezó a preguntarse si Jehová realmente estaba escuchando sus oraciones. Así que comenzó a <b class="k">anotar las cosas que le pedía</b>. Tiempo después volvió a leer lo que había escrito y se sorprendió al ver cuántas de aquellas oraciones Jehová había contestado; algunas hasta se le habían olvidado.</p>
+
+<p class="t">Eso nos puede hacer pensar: <b class="k">¿cuándo fue la última vez que Jehová me dio fuerzas justo cuando pensé que ya no podía más?</b><span class="chip pz s" data-ms="1500">pausa</span> Tal vez no quitó el problema. Pero, ¿nos dio paz? ¿Nos ayudó a tomar una buena decisión? ¿Usó a un hermano, una hermana o nuestra familia para ayudarnos justo cuando lo necesitábamos?</p>
+
+<p class="t">Cuando nos detenemos a recordar esas cosas, nuestra confianza crece. Y cuando aparece el siguiente problema, <b class="k">ya no estamos empezando de cero</b>. Podemos decir: “Jehová ya me ha sostenido antes. Tengo razones para confiar en él ahora”.</p>
+
+<p class="t">Pero ¿qué hacemos cuando la angustia ya llegó y nos sentimos abrumados? Fíjense en la invitación tan personal que Jehová nos hace. <b class="k">Leamos Salmo 50, versículo 15.</b><span class="chip pz s" data-ms="3000">pausa</span></p>
+
+<p class="t q">«<b class="k">Llámame en tiempos de angustia; yo te rescataré, y tú me darás gloria</b>».<span class="chip pz s" data-ms="2500">pausa</span></p>
+
+<p class="t">Me gusta mucho que Jehová no dice que nunca tendremos un “tiempo de angustia”. Lo que nos dice es: <b class="k">“Cuando llegue, llámame”</b>.</p>
+
+<p class="t">Así que, cuando sentimos que ya no vemos una salida, ese no es el momento de alejarnos de Jehová ni de dejar de orar porque pensemos que no está respondiendo. Es el momento de <b class="k">acercarnos todavía más a él</b>. Hablarle con franqueza. Pedirle sabiduría, paz, fuerzas... lo que necesitemos para poder dar el siguiente paso.</p>
+
+<p class="t">Y aquí hay algo importante: <b class="k">confiar en Jehová no significa estar seguros de lo que él va a hacer; significa estar seguros de quién es él</b>.<span class="chip pz s" data-ms="1500">pausa</span><span class="chip look">mira al público</span></p>
+
+<p class="t">Quizás no sepamos cómo va a contestar nuestra oración. Quizás la solución no sea exactamente la que nosotros esperábamos. Pero sí sabemos qué clase de Dios es Jehová. Y por eso podemos seguir confiando.</p>
+
+<p class="t">También fortalecemos esa confianza al <b class="k">meditar en promesas que Jehová ya ha cumplido</b>. Pensemos, por ejemplo, en las resurrecciones que registra la Biblia. No son simplemente historias bonitas. Son pruebas de lo que Jehová puede hacer. Lo que ha hecho en el pasado nos da confianza en lo que promete hacer en el futuro.</p>
+
+<p class="t">Así que nuestra esperanza en la resurrección no es solo un deseo de volver a ver a quienes hemos perdido. Es una esperanza basada en <b class="k">lo que Jehová ya ha demostrado que puede hacer</b>. Y esa esperanza nos tranquiliza y nos ayuda a mirar más allá de lo que estamos sufriendo ahora.</p>
+
+<p class="t">Por eso, cuando una situación parezca desesperada, podemos preguntarnos: <b class="k">“¿Voy a dejar que lo que estoy viendo ahora determine cuánto confío en Jehová? ¿O voy a recordar todo lo que ya sé de él?”</b><span class="chip pz s" data-ms="1500">pausa</span></p>
+
+<p class="t">Podemos imitar a la mujer sunamita haciendo justamente eso: <b class="k">recordar cómo Jehová nos ha cuidado, llamarlo cuando llegue la angustia y seguir fortaleciendo nuestra confianza en sus promesas</b>.</p>
+
+<p class="t">Ahora queremos entrevistar a una de nuestras hermanas del circuito que ha permanecido fiel a Jehová a pesar de enfrentarse a muchas dificultades de índole personal.</p>
+
+<p class="t" id="iv"> Hola Hna López, Primero quiero decirte que los que te conocemos, admiramos mucho la forma en que cuidas de tu mamá de 96 años, con todas sus citas médicas y cuidados. Y aun con esa gran responsabilidad y las limitaciones de tiempo o recursos, Sigues mes tras mes y año tras año  en el servicio como precursora regular. ¿Qué ha hecho Jehová que ha fortalecido tu confianza en él?<span class="chip pz l" data-ms="50000">pausa 50 s</span></p>
+
+<p class="t">Se nota su alegría y tranquilidad, hermana. Y es impresionante porque yo sé que estos últimos años han sido especialmente difíciles para ti y tu familia con la pérdida de tu hermana menor y tu sobrino tan joven. Perder seres queridos es muy duro. En esos momentos de tanto dolor, ¿de qué manera te ayudó esa confianza en Jehová a enfrentarte a las pruebas y no rendirte?<span class="chip pz l" data-ms="50000">pausa 50 s</span></p>
+
+<p class="t">Gracias hermana. Tu fe nos anima a todos. Mirando hacia atrás, con todo lo que has vivido y el esfuerzo que haces cada día, ¿cuáles dirías que han sido las mayores recompensas que te ha dado Jehová por confiar plenamente en él?<span class="chip look">mira al público</span></p>
+  
+
+<h2 class="sec">Parte 3 · Confiar en Jehová nos hace felices <em>2 min</em></h2>
+
+<p class="t" id="c1"><b class="k">Muchas gracias, <span class="f">hermana</span></b>, López, por compartir tu experiencia con nosotros. Tu ejemplo nos recuerda a todos que la fe activa siempre tiene la bendición de Jehová. Bueno, hermanos, como la mujer sunamita, y como muchos de ustedes, la persona que confía en Jehová, no se deja sacudir por las circunstancias, las emociones ni la incertidumbre. Y </p>
+
+<p class="t">Como confiamos plenamente en Jehová y en que habrá una resurrección, no tenemos un temor exagerado a las enfermedades ni a la muerte. Nuestra confianza no descansa en nuestra condición física. <b class="k">Descansa en el cuidado inagotable de nuestro amoroso Padre, Jehová.</b> Así que, a pesar de nuestras pruebas actuales, podemos mirar al futuro con confianza y disfrutar de cierta medida de paz.</p>
+
+<p class="t">Y como se dice en <b class="k">2 Corintios, capítulo 4, versículos 16 </b>, <span class="chip pz s" data-ms="1500">pausa</span></p>
+
+<p class="t q"><b class="k">no nos rendimos.</b> Aunque la persona que somos por fuera vaya desgastándose, <b class="k">la persona que somos por dentro</b> sin duda va renovándose cada día. <span class="chip pz l" data-ms="4000">pausa larga</span></p>
+
+<p class="t"> Nosotrosni siquiera sabemos cómo se llamaba la mujer de Sunem. Pero <b class="k">Jehová sí lo sabe, y no olvidó su confianza.</b> Imitemos a la mujer sunamita. <b class="k">Confiemos plenamente en Jehová.</b><span class="chip pz s" data-ms="1500">pausa</span></p>
+
+<p class="t">Ahora el hermano <span class="blank">____________</span> presentará el último discurso de esta serie: «<b class="k">Imitemos a los que confiaron en Jehová. Daniel, Hananías, Misael y Azarías</b>».</p>
+
+<p class="fin">FIN</p>
+    </div></div>
+    <div id="dim"></div>
+    <div id="bar"></div>
+    <div id="prog"><i></i></div>
+  </main>
+</div>
+
+<script>
+(function(){
+  var $=function(s){return document.querySelector(s)}, $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+  var root=document.documentElement;
+  var stage=$('#stage'), content=$('#content'), bar=$('#bar'), dim=$('#dim'), prog=$('#prog i');
+  var playB=$('#play'), spd=$('#spd'), spdv=$('#spdv'), etaE=$('#eta'), clockE=$('#clock');
+  var S={wpm:130,fs:(window.innerWidth>=900?48:36),auto:true,male:false,theme:'dark'};
+  try{var j=JSON.parse(localStorage.getItem('sunamita-tp')||'{}');for(var k in j){S[k]=j[k]}}catch(e){}
+  function save(){try{localStorage.setItem('sunamita-tp',JSON.stringify(S))}catch(e){}}
+
+  var offset=0,maxOff=1,readY=0,barY=0,pxWord=1,markers=[],mi=0,ivh=0;
+  var playing=false,started=false,holdUntil=0,holdEl=null,last=0,dragging=false,startT=0,anim=null,atStop=false,wl=null,etaT=0,clockT=0;
+
+  function clamp(v){return Math.max(0,Math.min(maxOff,v))}
+  function words(p){
+    var c=p.cloneNode(true);
+    [].forEach.call(c.querySelectorAll('.chip'),function(x){x.remove()});
+    [].forEach.call(c.querySelectorAll(root.classList.contains('male')?'.f':'.m'),function(x){x.remove()});
+    return (c.textContent.trim().match(/\S+/g)||[]).length;
+  }
+  function fmt(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)}
+
+  function applyPrefs(){
+    root.classList.toggle('male',!!S.male);
+    root.setAttribute('data-theme',S.theme==='light'?'light':'dark');
+    content.style.setProperty('--fs',S.fs+'px');
+    spd.value=S.wpm; spdv.textContent=S.wpm+' ppm';
+    $('#auto').setAttribute('aria-pressed',S.auto?'true':'false');
+    $('#auto').textContent='Pausas automáticas: '+(S.auto?'sí':'no');
+    $('#gender').textContent='Entrevista a: '+(S.male?'hermano':'hermana');
+    $('#theme').textContent=S.theme==='light'?'Fondo oscuro':'Fondo claro';
+  }
+
+  function layout(){
+    var h=stage.clientHeight, lh=S.fs*1.5;
+    barY=Math.round(h*0.30); readY=barY+lh/2;
+    var bh=Math.round(lh*1.35), top=Math.round(readY-bh/2);
+    bar.style.height=bh+'px'; bar.style.top=top+'px'; dim.style.height=top+'px';
+    content.style.paddingTop=barY+'px'; content.style.paddingBottom=(h-barY)+'px';
+    measure();
+  }
+  function measure(){
+    var ratio=maxOff>1?offset/maxOff:0;
+    maxOff=Math.max(1,content.offsetHeight-stage.clientHeight);
+    var total=0; $$('.t').forEach(function(p){total+=words(p)});
+    var iv=$('#iv'); ivh=0;
+    pxWord=Math.max(.1,(maxOff-ivh)/Math.max(1,total));
+    markers=$$('[data-ms],[data-stop]').map(function(el){
+      var stop=el.hasAttribute('data-stop');
+      return {el:el,stop:stop,ms:+el.getAttribute('data-ms')||0,y:stop?el.offsetTop+8:el.offsetTop+el.offsetHeight/2};
+    });
+    offset=clamp(ratio*maxOff);
+    recompute(); apply();
+  }
+  function recompute(){
+    mi=markers.length;
+    for(var i=0;i<markers.length;i++){ if(markers[i].y-offset>readY){mi=i;break} }
+  }
+  function apply(){
+    content.style.transform='translate3d(0,'+(-offset).toFixed(1)+'px,0)';
+    prog.style.height=(100*offset/maxOff).toFixed(1)+'%';
+  }
+  function pxSec(){return S.wpm*pxWord/60}
+
+  function label(){
+    playB.innerHTML=playing?'<span class="ic pause"></span> Pausar':'<span class="ic play"></span> '+(started?'Reanudar':'Iniciar');
+  }
+  function wake(){try{if(navigator.wakeLock&&!wl){navigator.wakeLock.request('screen').then(function(l){wl=l;l.addEventListener('release',function(){wl=null})}).catch(function(){})}}catch(e){}}
+  function setPlaying(v){
+    playing=v;
+    if(v){ if(!started){started=true;startT=performance.now()} holdUntil=0; clearHold(); wake(); }
+    label();
+  }
+  function clearHold(){ if(holdEl){holdEl.classList.remove('hit');holdEl=null} }
+  function flash(el){ el.classList.add('hit'); if(!el.hasAttribute('data-stop')){setTimeout(function(){if(el!==holdEl)el.classList.remove('hit')},900)} }
+
+  function animateTo(target,dur,done){
+    target=clamp(target); anim={from:offset,to:target,t0:performance.now(),dur:dur,done:done};
+  }
+  function jumpEl(el,after){ animateTo(el.offsetTop-barY,500,after) }
+  function resumeAfterInterview(){
+    atStop=false; var c=$('#c1'); setPlaying(true);
+    animateTo(c.offsetTop-barY,600,function(){recompute()});
+  }
+  function toggle(){
+    if(playing){setPlaying(false);return}
+    if(offset>=maxOff-1){return}
+    if(atStop){resumeAfterInterview();return}
+    setPlaying(true);
+  }
+  function reset(){
+    playing=false;started=false;atStop=false;anim=null;holdUntil=0;clearHold();
+    offset=0;recompute();apply();label();
+    $$('.hit').forEach(function(x){x.classList.remove('hit')});
+    clockE.textContent='0:00';$('#clockw').classList.remove('warn','over');
+  }
+
+  function frame(t){
+    requestAnimationFrame(frame);
+    var dt=last?Math.min(.05,(t-last)/1000):0; last=t;
+    if(anim){
+      var p=Math.min(1,(t-anim.t0)/anim.dur), e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      offset=anim.from+(anim.to-anim.from)*e; apply();
+      if(p>=1){var d=anim.done;anim=null;recompute();if(d)d()}
+    } else if(playing&&!dragging){
+      if(holdEl&&t>=holdUntil){clearHold()}
+      if(t>=holdUntil){
+        offset=Math.min(maxOff,offset+pxSec()*dt);
+        while(mi<markers.length&&markers[mi].y-offset<=readY){
+          var m=markers[mi++]; flash(m.el);
+          if(m.stop){atStop=true;setPlaying(false);break}
+          if(S.auto&&m.ms){holdUntil=t+m.ms;holdEl=m.el;m.el.classList.add('hit');break}
+        }
+        if(offset>=maxOff-0.5){setPlaying(false)}
+      }
+      apply();
+    }
+    if(started&&t-clockT>250){
+      clockT=t;var el=(performance.now()-startT)/1000;clockE.textContent=fmt(el);
+      var cw=$('#clockw');cw.classList.toggle('warn',el>=840&&el<900);cw.classList.toggle('over',el>=900);
+    }
+    if(t-etaT>500){
+      etaT=t;
+      var remPx=Math.max(0,maxOff-offset);
+      var sec=remPx/pxWord/S.wpm*60;
+      if(S.auto){for(var i=mi;i<markers.length;i++){sec+=markers[i].ms/1000}}
+      etaE.textContent='lectura restante '+fmt(sec);
+    }
+  }
+
+  /* input */
+  var lastY=0;
+  stage.addEventListener('pointerdown',function(e){
+    if(e.target.closest('button'))return;
+    dragging=true;lastY=e.clientY;anim=null;atStop=false;stage.style.cursor='grabbing';
+  });
+  window.addEventListener('pointermove',function(e){
+    if(!dragging)return; offset=clamp(offset-(e.clientY-lastY)); lastY=e.clientY; apply();
+  });
+  function up(){ if(!dragging)return; dragging=false;stage.style.cursor='grab';recompute(); }
+  window.addEventListener('pointerup',up); window.addEventListener('pointercancel',up);
+  stage.addEventListener('wheel',function(e){e.preventDefault();offset=clamp(offset+e.deltaY);atStop=false;recompute();apply()},{passive:false});
+  window.addEventListener('keydown',function(e){
+    if(e.target&&e.target.tagName==='INPUT')return;
+    if(e.code==='Space'){e.preventDefault();toggle()}
+    else if(e.key==='ArrowDown'){offset=clamp(offset+60);recompute();apply()}
+    else if(e.key==='ArrowUp'){offset=clamp(offset-60);recompute();apply()}
+  });
+
+  playB.addEventListener('click',toggle);
+  $('#reset').addEventListener('click',reset);
+  var cont=$('#cont'); if(cont){cont.addEventListener('click',resumeAfterInterview);}
+  spd.addEventListener('input',function(){S.wpm=+spd.value;spdv.textContent=S.wpm+' ppm';save()});
+  $('#fm').addEventListener('click',function(){S.fs=Math.max(26,S.fs-4);save();applyPrefs();layout()});
+  $('#fp').addEventListener('click',function(){S.fs=Math.min(80,S.fs+4);save();applyPrefs();layout()});
+  $('#auto').addEventListener('click',function(){S.auto=!S.auto;save();applyPrefs()});
+  $('#gender').addEventListener('click',function(){S.male=!S.male;save();applyPrefs();layout()});
+  $('#theme').addEventListener('click',function(){S.theme=S.theme==='light'?'dark':'light';save();applyPrefs()});
+  $$('[data-go]').forEach(function(b){b.addEventListener('click',function(){
+    var el=$(b.getAttribute('data-go'));
+    atStop=false; jumpEl(el,null);
+  })});
+  window.addEventListener('resize',layout);
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&playing)wake()});
+
+  applyPrefs(); label(); layout();
+  if(document.fonts&&document.fonts.ready){document.fonts.ready.then(layout)}
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
