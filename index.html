@@ -33,22 +33,24 @@ button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:3px solid var(--key);outline-offset:2px}
 
 /* controls */
-#top{background:var(--ui);border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 12px calc(16px + env(safe-area-inset-left));display:flex;flex-direction:column;gap:10px}
-.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;min-width:0}
-.speed label{font-size:15px;color:var(--mute);letter-spacing:.06em;text-transform:uppercase}
-#spd{flex:1 1 220px;min-width:0;height:36px;accent-color:var(--key)}
-#spdv{font-family:var(--font-mono);font-size:18px;min-width:5.5em}
-#eta{font-family:var(--font-mono);font-size:15px;color:var(--mute)}
-.btn{min-height:52px;padding:0 20px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:18px;font-weight:700;display:inline-flex;align-items:center;gap:10px}
-.btn.main{background:var(--btn);color:var(--btnfg);border-color:transparent;min-width:156px;justify-content:center}
-.sm{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:15px}
+#top{background:var(--ui);border-bottom:1px solid var(--line);padding:calc(8px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 8px calc(12px + env(safe-area-inset-left));display:flex;flex-direction:column;gap:8px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;min-width:0}
+.stats{justify-content:space-between}
+.controls{align-items:center}
+#eta{font-family:var(--font-mono);font-size:15px;color:var(--mute);white-space:nowrap}
+.btn{min-height:46px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);font-size:17px;font-weight:700;display:inline-flex;align-items:center;gap:10px}
+.btn.main{background:var(--btn);color:var(--btnfg);border-color:transparent;min-width:136px;justify-content:center}
+.sm{min-height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:14px}
 .sm[aria-pressed="true"]{border-color:var(--pz);color:var(--pz)}
-.grp{display:inline-flex;align-items:center;gap:6px;font-size:15px;color:var(--mute)}
+.groupbox{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-height:40px}
+.mini{font-size:12px;color:var(--mute);letter-spacing:.06em;text-transform:uppercase}
+#spdv{font-family:var(--font-mono);font-size:17px;min-width:5.2em;text-align:center}
+.iconbtn{min-width:42px;justify-content:center;font-size:18px;line-height:1}
 .clock{font-family:var(--font-mono);font-size:30px;font-weight:500;line-height:1}
 .clock.warn #clock{color:var(--key)}.clock.over #clock{color:var(--stop)}
 .clock small{color:var(--mute);font-size:14px}
-.jump{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px;color:var(--mute)}
-.jump button{min-height:40px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:transparent;font-size:14px}
+.extras{gap:6px}
+.extras .sm{min-height:36px;padding:0 10px;font-size:13px}
 .ic{display:inline-block;width:14px;height:16px;position:relative}
 .ic.play::before{content:"";position:absolute;left:1px;top:0;border-left:13px solid currentColor;border-top:8px solid transparent;border-bottom:8px solid transparent}
 .ic.pause::before,.ic.pause::after{content:"";position:absolute;top:0;width:4px;height:16px;background:currentColor;border-radius:1px}
@@ -86,38 +88,39 @@ html.male .f{display:none} html:not(.male) .m{display:none}
 #prog{position:absolute;right:0;top:0;bottom:0;width:5px;background:var(--line);z-index:4;pointer-events:none}
 #prog i{display:block;width:100%;height:0;background:var(--key)}
 @media (prefers-reduced-motion:reduce){.chip{transition:none}}
-@media (max-width:760px){#top{padding-bottom:10px}.row{gap:8px 10px}.btn{padding:0 14px;font-size:16px;min-height:48px}.btn.main{min-width:130px}.sm{min-height:42px}.clock{font-size:24px}.jump{gap:6px}.jump button{min-height:38px}.col{padding-inline:18px}}
-@media (orientation:landscape) and (max-height:650px){#top{gap:6px}.btn{min-height:42px}.sm{min-height:38px}.jump button{min-height:34px}.clock{font-size:22px}}
+@media (max-width:900px){#top{padding-bottom:8px}.clock{font-size:24px}.btn{padding:0 13px;font-size:15px;min-height:42px}.btn.main{min-width:112px}.sm{min-height:36px;font-size:13px;padding:0 10px}.groupbox{padding:4px 6px;gap:5px}.mini{display:none}.iconbtn{min-width:36px;font-size:16px}.col{padding-inline:18px}}
+@media (orientation:landscape) and (max-height:700px){#top{gap:6px}.clock{font-size:22px}#eta{font-size:13px}.btn{min-height:40px;padding:0 12px;font-size:14px}.btn.main{min-width:104px}.sm{min-height:34px;font-size:12px}.groupbox{min-height:34px}.extras .sm{min-height:32px}}
+
 </style>
 
 </head><body>
 <div id="app">
   <header id="top">
-    <div class="row speed">
-      <label for="spd">Velocidad</label>
-      <input id="spd" type="range" min="90" max="190" step="5" value="130" aria-label="Velocidad en palabras por minuto">
-      <output id="spdv" for="spd">130 ppm</output>
+    <div class="row stats">
       <span class="clock" id="clockw" title="Tiempo transcurrido: no se detiene al pausar"><span id="clock">0:00</span> <small>/ 15:00</small></span>
       <span id="eta">lectura restante --:--</span>
     </div>
-    <div class="row">
+    <div class="row controls">
       <button id="play" class="btn main" type="button"></button>
       <button id="reset" class="btn" type="button">&#8634; Reiniciar</button>
-      <span class="grp">Letra
+      <span class="groupbox" aria-label="Velocidad">
+        <span class="mini">Velocidad</span>
+        <button id="sdm" class="sm iconbtn" type="button" aria-label="Reducir velocidad">🐢</button>
+        <output id="spdv">130 ppm</output>
+        <button id="sdp" class="sm iconbtn" type="button" aria-label="Aumentar velocidad">🐇</button>
+      </span>
+      <span class="groupbox" aria-label="Tamaño de letra">
+        <span class="mini">Letra</span>
         <button id="fm" class="sm" type="button" aria-label="Letra más pequeña">A&minus;</button>
         <button id="fp" class="sm" type="button" aria-label="Letra más grande">A+</button>
       </span>
+      <button id="more" class="sm" type="button" aria-expanded="false">Más</button>
+    </div>
+    <div class="row extras" id="extras" hidden>
       <button id="auto" class="sm" type="button" aria-pressed="true">Pausas automáticas: sí</button>
       <button id="gender" class="sm" type="button">Entrevista a: hermana</button>
       <button id="theme" class="sm" type="button">Fondo claro</button>
     </div>
-    <nav class="jump" aria-label="Saltar a una parte">
-      Ir a:
-      <button type="button" data-go="#p1">Introducción</button>
-      <button type="button" data-go="#p2">Cómo imitarla</button>
-      <button type="button" data-go="#iv">Entrevista</button>
-      <button type="button" data-go="#c1">Conclusión</button>
-    </nav>
   </header>
 
   <main id="stage" aria-label="Texto del discurso">
@@ -235,7 +238,7 @@ html.male .f{display:none} html:not(.male) .m{display:none}
   var $=function(s){return document.querySelector(s)}, $$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
   var root=document.documentElement;
   var stage=$('#stage'), content=$('#content'), bar=$('#bar'), dim=$('#dim'), prog=$('#prog i');
-  var playB=$('#play'), spd=$('#spd'), spdv=$('#spdv'), etaE=$('#eta'), clockE=$('#clock');
+  var playB=$('#play'), spdv=$('#spdv'), etaE=$('#eta'), clockE=$('#clock');
   var S={wpm:130,fs:(window.innerWidth>=900?48:36),auto:true,male:false,theme:'dark'};
   try{var j=JSON.parse(localStorage.getItem('sunamita-tp')||'{}');for(var k in j){S[k]=j[k]}}catch(e){}
   function save(){try{localStorage.setItem('sunamita-tp',JSON.stringify(S))}catch(e){}}
@@ -251,12 +254,15 @@ html.male .f{display:none} html:not(.male) .m{display:none}
     return (c.textContent.trim().match(/\S+/g)||[]).length;
   }
   function fmt(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+('0'+(s%60)).slice(-2)}
+  function clampWpm(v){return Math.max(90,Math.min(190,Math.round(v/2)*2))}
+  function setWpm(v){S.wpm=clampWpm(v);spdv.textContent=S.wpm+' ppm';save()}
+  function extrasOpen(v){var ex=$('#extras'), mb=$('#more'); if(!ex||!mb)return; ex.hidden=!v; mb.setAttribute('aria-expanded',v?'true':'false'); mb.textContent=v?'Menos':'Más'}
 
   function applyPrefs(){
     root.classList.toggle('male',!!S.male);
     root.setAttribute('data-theme',S.theme==='light'?'light':'dark');
     content.style.setProperty('--fs',S.fs+'px');
-    spd.value=S.wpm; spdv.textContent=S.wpm+' ppm';
+    setWpm(S.wpm);
     $('#auto').setAttribute('aria-pressed',S.auto?'true':'false');
     $('#auto').textContent='Pausas automáticas: '+(S.auto?'sí':'no');
     $('#gender').textContent='Entrevista a: '+(S.male?'hermano':'hermana');
@@ -300,7 +306,7 @@ html.male .f{display:none} html:not(.male) .m{display:none}
   function wake(){try{if(navigator.wakeLock&&!wl){navigator.wakeLock.request('screen').then(function(l){wl=l;l.addEventListener('release',function(){wl=null})}).catch(function(){})}}catch(e){}}
   function setPlaying(v){
     playing=v;
-    if(v){ if(!started){started=true;startT=performance.now()} holdUntil=0; clearHold(); wake(); }
+    if(v){ if(!started){started=true;startT=performance.now()} holdUntil=0; clearHold(); wake(); extrasOpen(false); }
     label();
   }
   function clearHold(){ if(holdEl){holdEl.classList.remove('hit');holdEl=null} }
@@ -377,25 +383,25 @@ html.male .f{display:none} html:not(.male) .m{display:none}
     if(e.code==='Space'){e.preventDefault();toggle()}
     else if(e.key==='ArrowDown'){offset=clamp(offset+60);recompute();apply()}
     else if(e.key==='ArrowUp'){offset=clamp(offset-60);recompute();apply()}
+    else if(e.key==='-'){setWpm(S.wpm-2)}
+    else if(e.key==='+'||e.key==='='){setWpm(S.wpm+2)}
   });
 
   playB.addEventListener('click',toggle);
   $('#reset').addEventListener('click',reset);
   var cont=$('#cont'); if(cont){cont.addEventListener('click',resumeAfterInterview);}
-  spd.addEventListener('input',function(){S.wpm=+spd.value;spdv.textContent=S.wpm+' ppm';save()});
+  $('#sdm').addEventListener('click',function(){setWpm(S.wpm-2)});
+  $('#sdp').addEventListener('click',function(){setWpm(S.wpm+2)});
+  $('#more').addEventListener('click',function(){extrasOpen($('#extras').hidden)});
   $('#fm').addEventListener('click',function(){S.fs=Math.max(26,S.fs-4);save();applyPrefs();layout()});
   $('#fp').addEventListener('click',function(){S.fs=Math.min(80,S.fs+4);save();applyPrefs();layout()});
   $('#auto').addEventListener('click',function(){S.auto=!S.auto;save();applyPrefs()});
   $('#gender').addEventListener('click',function(){S.male=!S.male;save();applyPrefs();layout()});
   $('#theme').addEventListener('click',function(){S.theme=S.theme==='light'?'dark':'light';save();applyPrefs()});
-  $$('[data-go]').forEach(function(b){b.addEventListener('click',function(){
-    var el=$(b.getAttribute('data-go'));
-    atStop=false; jumpEl(el,null);
-  })});
   window.addEventListener('resize',layout);
   document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&playing)wake()});
 
-  applyPrefs(); label(); layout();
+  extrasOpen(false); applyPrefs(); label(); layout();
   if(document.fonts&&document.fonts.ready){document.fonts.ready.then(layout)}
   requestAnimationFrame(frame);
 })();
